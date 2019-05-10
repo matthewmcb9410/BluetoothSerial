@@ -78,6 +78,19 @@ export class HomePage implements OnInit {
   selectDevice() {
     this.showConnectReader = false;
     this.showDisconnectReader = true;
+
+    let connectedDevice = this.pairedList[this.pairedDeviceID];
+    if (!connectedDevice.address) {
+      this.showError("Select Paired Device to connect");
+      return;
+    }
+    let address = connectedDevice.address;
+    // let name = connectedDevice.name;
+
+    this.connect(address);
+  }
+
+  selectDevice2() {
     this.showConnectWeigher = false;
     this.showDisconnectWeigher = true;
 
@@ -89,7 +102,7 @@ export class HomePage implements OnInit {
     let address = connectedDevice.address;
     // let name = connectedDevice.name;
 
-    this.connect(address);
+    this.connect2(address);
   }
 
   connect(address) {
@@ -105,9 +118,39 @@ export class HomePage implements OnInit {
     );
   }
 
+  connect2(address) {
+    // Attempt to connect device with specified address, call app.deviceConnected if success
+    (<any> this.bluetoothSerial).connect2(address).subscribe(
+      success => {
+        this.deviceConnected2();
+        this.showToast("Successfully Connected");
+      },
+      error => {
+        this.showError("Error:Connecting to Device");
+      }
+    );
+  }
+
   deviceConnected() {
     // Subscribe to data receiving as soon as the delimiter is read
     this.bluetoothSerial.subscribe("\r").subscribe(
+    // this.bluetoothSerial.subscribe("").subscribe(
+    // this.bluetoothSerial.subscribeRawData().subscribe(
+      success => {
+        var bytes = new Uint8Array(success);
+
+        this.handleData(success);
+        this.showToast("Connected Successfullly");
+      },
+      error => {
+        this.showError(error);
+      }
+    );
+  }
+
+  deviceConnected2() {
+    // Subscribe to data receiving as soon as the delimiter is read
+    (<any>this.bluetoothSerial).subscribe2("\r").subscribe(
     // this.bluetoothSerial.subscribe("").subscribe(
     // this.bluetoothSerial.subscribeRawData().subscribe(
       success => {
@@ -150,6 +193,35 @@ export class HomePage implements OnInit {
           text: "Disconnect",
           handler: () => {
             this.bluetoothSerial.disconnect();
+            this.gettingDevices = null;
+          }
+        }
+      ]
+    });
+    alert.present();
+  }
+
+  disconnect2() {
+    this.showConnectReader = true;
+    this.showDisconnectReader = false;
+    this.showConnectWeigher = true;
+    this.showDisconnectWeigher = false;
+
+    let alert = this.alertCtrl.create({
+      title: "Disconnect?",
+      message: "Do you want to Disconnect?",
+      buttons: [
+        {
+          text: "Cancel",
+          role: "cancel",
+          handler: () => {
+            alert.dismiss();
+          }
+        },
+        {
+          text: "Disconnect",
+          handler: () => {
+            (<any> this.bluetoothSerial).disconnect2();
             this.gettingDevices = null;
           }
         }
